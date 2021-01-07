@@ -1,6 +1,5 @@
 <h2 align="center">MyBatis-Code-Generator</h2>
 
----
 > Mybatis代码生成器，一键生成业务模块代码，大幅提高开发效率。
 
 ```text
