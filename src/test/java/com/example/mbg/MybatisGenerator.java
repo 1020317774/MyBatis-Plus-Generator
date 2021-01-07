@@ -1,4 +1,4 @@
-package com.wyc.mbgenerator;
+package com.example.mbg;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
@@ -21,60 +21,27 @@ import java.util.Scanner;
  * 请先配置一下参数
  *
  * @author knox
- * @date 2020-12-15
- * @since 1.0.0
+ * @since 2020-12-15
  */
-public class MySqlCodeGenerator {
+public class MybatisGenerator {
 
-    /**
-     * 8.x版本驱动 和 5.x版本驱动
-     */
-    public static final String DATABASE_DRIVER_8_X = "com.mysql.cj.jdbc.Driver";
-    public static final String DATABASE_DRIVER_5_X = "com.mysql.jdbc.Driver";
-
-    /**
-     * 数据库名，地址(不用写端口)，账号，密码
-     */
-    public static final String DATABASE = "elasticsearch";
-    public static final String DATABASE_URI = "localhost";
-    public static final String DATABASE_USERNAME = "root";
-    public static final String DATABASE_PASSWORD = "admin";
-
-    /**
-     * 父包名。如果为空，将下面子包名必须写全部， 否则就只需写子包名
-     * <p>
-     * 项目包路径，与模块拼接一起。如： com.wyc.generator.module
-     * <p>
-     * 父包模块名，如微服务，分多模块，不填则不分模块创建
-     */
-    public static final String PACKAGE = "com.wyc.generator";
-    public static final String MODULE_NAME = "null";
-
-    /**
-     * 项目基类，如BaseController，非必须
-     */
-    public static final String SUPER_CONTROLLER = "";
-
-    /**
-     * 作者
-     */
-    public static final String AUTHOR = "knox";
-
-    /**
-     * 生成全部表
-     */
-    public static final String ALL = "all";
+    private static final String DATABASE_DRIVER = "com.mysql.cj.jdbc.Driver";
+    private static final String DATABASE = "spring-cloud-alibaba-template";
+    private static final String DATABASE_USERNAME = "root";
+    private static final String DATABASE_PASSWORD = "admin";
+    private static final String SUPER_CONTROLLER = "";
+    private static final String AUTHOR = "knox";
 
     /**
      * 读取控制台内容
      */
     public static String scanner(String tip) {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("请输入" + tip + ":");
+        System.out.println("请输入" + tip + "：");
         if (scanner.hasNext()) {
             String ipt = scanner.next();
             if (!ObjectUtils.isEmpty(ipt)) {
-                return ipt;
+                return ipt.toLowerCase();
             }
         }
         throw new MybatisPlusException("请输入正确的" + tip + "！");
@@ -89,8 +56,8 @@ public class MySqlCodeGenerator {
 
         // 1.数据源配置
         DataSourceConfig dataSourceConfig = new DataSourceConfig();
-        dataSourceConfig.setUrl("jdbc:mysql://" + DATABASE_URI + ":3306/" + DATABASE + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&serverTimezone=GMT%2B8");
-        dataSourceConfig.setDriverName(DATABASE_DRIVER_8_X);
+        dataSourceConfig.setUrl("jdbc:mysql://localhost:3306/" + DATABASE + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&serverTimezone=GMT%2B8");
+        dataSourceConfig.setDriverName(DATABASE_DRIVER);
         dataSourceConfig.setUsername(DATABASE_USERNAME);
         dataSourceConfig.setPassword(DATABASE_PASSWORD);
         mpg.setDataSource(dataSourceConfig);
@@ -112,9 +79,9 @@ public class MySqlCodeGenerator {
         // 开启 BaseResultMap
         globalConfig.setBaseResultMap(true);
         // 开启通用查询结果列
-        globalConfig.setBaseColumnList(true);
+        globalConfig.setBaseColumnList(false);
         // 实体命名方式，默认null，例如：%sEntity 生成 UserEntity
-        globalConfig.setEntityName("%sEntity");
+        // globalConfig.setEntityName("%sEntity");
         // mapper 命名方式,默认值：null 例如：%sDao 生成 UserDao
         globalConfig.setMapperName("%sMapper");
 
@@ -124,13 +91,10 @@ public class MySqlCodeGenerator {
 
         // 3.包配置
         PackageConfig packageConfig = new PackageConfig();
-        // 生成文件包名
+        // 业务模块
         packageConfig.setParent(scanner("包路径"));
         // 项目模块,如无不设置
-        String moduleName = scanner("项目模块名，若没有，请输入null");
-        if (!MODULE_NAME.equalsIgnoreCase(moduleName)) {
-            packageConfig.setModuleName(moduleName.trim());
-        }
+        packageConfig.setModuleName(scanner("模块名").trim());
         mpg.setPackageInfo(packageConfig);
 
         // 4.自定义配置
@@ -185,13 +149,15 @@ public class MySqlCodeGenerator {
         }
 
         // 需要生成的表，若全部生成，可不配置
-        String tables = scanner("表名，多个英文逗号分割，若生成全部表，请输入all");
-        if (!ALL.equalsIgnoreCase(tables)) {
+        String tables = scanner("表名，多个英文逗号分割；若生成全部表，请输入all");
+        if (!"ALL".equalsIgnoreCase(tables)) {
             strategyConfig.setInclude(tables.trim().split(","));
         }
         // RequestMapping注解
         strategyConfig.setControllerMappingHyphenStyle(true);
         // 表前缀
+        strategyConfig.setTablePrefix(packageConfig.getModuleName() + "_");
+
         mpg.setStrategy(strategyConfig);
         mpg.setTemplateEngine(new FreemarkerTemplateEngine());
         mpg.execute();
